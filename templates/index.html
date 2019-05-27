@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        {# the above 3 tags must come first in the head before anything else -#}
+        <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+        <link href="{{ url_for('static', filename='css/mdb.lite.min.css') }}" rel="stylesheet">
+        <title>YTDL</title>
+    </head>
+    <body>
+        <div class="jumbotron jumbotron-fluid">
+            <div class="container">
+                <h1 class="display-4">YT Downloader</h1>
+                <p class="lead">Get videos from across the Great Firewall of China!</p>
+                <p><small>Please do not request long ass videos as this will incur network bandwidth usage and $$$. Availability of service is subject to change and can be discontinued at any time without warning, if abuse of service is found.</small></p>
+            </div>
+        </div>
+        <div class="container" id="flash_messages">
+            {%- with messages = get_flashed_messages(with_categories=true) -%}
+                {%- if messages -%}
+                    <br>
+                    <div class="row">
+                        <div class="col">
+                            {%- for category, message in messages -%}
+                                <div class="alert {{ category }}">{{ message }}</div>
+                            {%- endfor -%}
+                        </div>
+                    </div>
+                {%- endif -%}
+            {%- endwith -%}
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <form role="form" action="{{ url_for('index') }}" method="POST">
+                        <div class="form-group">
+                            <input type="text" class="form-control" name="vidlink" placeholder="Video link">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Get it!</button>
+                    </form>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col">
+                    <p>Available videos are listed below and are available for 24 hours from the time they are requested.</p>
+                    {% if videos|length > 0 -%}
+                        <ul>
+                            {% for video in videos -%}
+                            <li><a href="{{ url_for('download', video=video) }}">{{ video }}</a></li>
+                            {%- endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No videos currently available</p>
+                    {%- endif %}
+                </div>
+            </div>
+        </div>
+        {# delay js load -#}
+        <script src="{{ url_for('static', filename='js/jquery-3.4.0.min.js')}}"></script>
+        <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/mdb.lite.min.js') }}"></script>
+    </body>
+</html>
