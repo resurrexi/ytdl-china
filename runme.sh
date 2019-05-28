@@ -1,4 +1,3 @@
 #!/bin/sh
-cd /home/ubuntu/ytdl-china
-source "./venv/bin/activate"
-python app.py
+source /home/ubuntu/ytdl-china/venv/bin/activate
+python /home/ubuntu/ytdl-china/app.py
