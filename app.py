@@ -39,6 +39,7 @@ def index():
             import os
 
             ydl_opts = {
+                "quiet": True,
                 "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4",
                 "outtmpl": os.path.join(upload_dir, vidid + ".%(ext)s")
             }
@@ -89,4 +90,4 @@ def download(video=None):
 if __name__ == '__main__':
     from waitress import serve
     serve(app, host='0.0.0.0', port=5000)
-    # app.run(host='localhost', debug=True)
+    # app.run(host='0.0.0.0', debug=True)

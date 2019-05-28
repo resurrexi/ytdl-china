@@ -128,3 +128,6 @@ dmypy.json
 
 # project specific folders
 uploads/
+
+# loggers
+nohup.out
