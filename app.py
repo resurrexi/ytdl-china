@@ -31,11 +31,21 @@ def my_hook(d):
         print('Done downloading, now converting ...')
 
 
+def sorted_ls(path):
+    return list(
+        sorted(
+            os.listdir(path),
+            key=lambda f: os.stat(os.path.join(path, f)).st_mtime,
+            reverse=True
+        )
+    )
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     # scan upload folder for existing videos
     videos = [
-        f[:-4] for f in os.listdir(app.config['UPLOAD_FOLDER'])
+        f[:-4] for f in sorted_ls(app.config['UPLOAD_FOLDER'])
         if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], f)) and len(f) <= 15
     ]
 
@@ -49,6 +59,14 @@ def index():
         else:
             vidid = re.search(r'v=([a-zA-Z0-9\_\-]+)&?', address).group(1)
             vidlink = 'https://www.youtube.com/watch?v=' + vidid
+
+        # check if video already exists in uploads folder
+        if vidid in videos:
+            flash(
+                'The video already exists. Please check the links below.',
+                'alert-info'
+            )
+            return render_template('index.html', videos=videos)
 
         def download_video(vidlink, vidid, upload_dir, logger, hook):
             import youtube_dl
@@ -76,7 +94,7 @@ def index():
 
         flash(
             'The video is downloading. Refresh the page later for new links.',
-            'alert-success'
+            'alert-primary'
         )
 
     return render_template('index.html', videos=videos)
