@@ -15,6 +15,22 @@ app.config['TEMPLATE_FOLDER'] = os.path.join(filepath, 'templates')
 app.secret_key = 'DDD'
 
 
+class MyLogger(object):
+    def debug(self, msg):
+        pass
+
+    def warning(self, msg):
+        pass
+
+    def error(self, msg):
+        print(msg)
+
+
+def my_hook(d):
+    if d['status'] == 'finished':
+        print('Done downloading, now converting ...')
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     # scan upload folder for existing videos
@@ -34,14 +50,15 @@ def index():
             vidid = re.search(r'v=([a-zA-Z0-9\_\-]+)&?', address).group(1)
             vidlink = 'https://www.youtube.com/watch?v=' + vidid
 
-        def download_video(vidlink, vidid, upload_dir):
+        def download_video(vidlink, vidid, upload_dir, logger, hook):
             import youtube_dl
             import os
 
             ydl_opts = {
-                "quiet": True,
-                "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4",
-                "outtmpl": os.path.join(upload_dir, vidid + ".%(ext)s")
+                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4',
+                'outtmpl': os.path.join(upload_dir, vidid + '.%(ext)s'),
+                'logger': logger,
+                'progress_hooks': [hook],
             }
 
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
@@ -50,7 +67,8 @@ def index():
         # start thread
         ydl_thread = threading.Thread(
             target=download_video,
-            args=(vidlink, vidid, app.config['UPLOAD_FOLDER'])
+            args=(vidlink, vidid, app.config['UPLOAD_FOLDER'],
+                  MyLogger(), my_hook)
         )
         print('Opening thread...')
         ydl_thread.start()
