@@ -58,10 +58,10 @@
                                 <tr>
                                     <td>
                                         <a href="{{ url_for('download', video=video[0]) }}">
-                                        {% if video[2] | length < 1 -%}
-                                            {{ video[0] }}
-                                        {%- else -%}
+                                        {% if video[2] -%}
                                             {{ video[2] }}
+                                        {%- else -%}
+                                            {{ video[0] }}
                                         {%- endif %}
                                         </a>
                                     </td>
