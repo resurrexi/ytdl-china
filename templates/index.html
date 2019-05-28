@@ -46,11 +46,30 @@
                 <div class="col">
                     <p>Available videos are listed below and are available for 24 hours from the time they are requested.</p>
                     {% if videos|length > 0 -%}
-                        <ul>
-                            {% for video in videos -%}
-                            <li><a href="{{ url_for('download', video=video) }}">{{ video }}</a></li>
-                            {%- endfor %}
-                        </ul>
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Video</th>
+                                    <th scope="col">Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for video in videos -%}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('download', video=video[0]) }}">
+                                        {% if video[2] | length < 1 -%}
+                                            {{ video[0] }}
+                                        {%- else -%}
+                                            {{ video[2] }}
+                                        {%- endif %}
+                                        </a>
+                                    </td>
+                                    <td>{{ video[3] | tdiff }}</td>
+                                </tr>
+                                {%- endfor %}
+                            </tbody>
+                        </table>
                     {% else %}
                         <p>No videos currently available</p>
                     {%- endif %}

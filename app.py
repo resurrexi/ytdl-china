@@ -2,7 +2,9 @@ from __future__ import unicode_literals
 import os
 import threading
 import re
+import time
 
+from tinytag import TinyTag
 from flask import Flask, render_template, request, flash, send_from_directory
 
 # init vars for app
@@ -31,23 +33,52 @@ def my_hook(d):
         print('Done downloading, now converting ...')
 
 
+def get_title(f):
+    tag = TinyTag.get(f)
+    return tag.title
+
+
 def sorted_ls(path):
     return list(
         sorted(
-            os.listdir(path),
-            key=lambda f: os.stat(os.path.join(path, f)).st_ctime,
+            [
+                (
+                    f[:-4],
+                    f,
+                    get_title(os.path.join(path, f)),
+                    os.stat(os.path.join(path, f)).st_ctime
+                ) for f in os.listdir(path)
+                if os.path.isfile(os.path.join(path, f)) and len(f) <= 15
+            ],
+            key=lambda f: os.stat(os.path.join(path, f[1])).st_ctime,
             reverse=True
         )
     )
 
 
+@app.template_filter()
+def tdiff(s, default='just now'):
+    now = time.time()
+    diff = int(now) - int(s)
+
+    periods = (
+        (diff // 86400, "day", "days"),
+        (diff // 3600, "hour", "hours"),
+        (diff // 60, "minute", "minutes"),
+        (diff, "second", "seconds"),
+    )
+
+    for period, singular, plural in periods:
+        if period > 0:
+            return "%d %s ago" % (period, singular if period == 1 else plural)
+
+    return default
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     # scan upload folder for existing videos
-    videos = [
-        f[:-4] for f in sorted_ls(app.config['UPLOAD_FOLDER'])
-        if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], f)) and len(f) <= 15
-    ]
+    videos = sorted_ls(app.config['UPLOAD_FOLDER'])
 
     if request.method == 'POST':
         address = request.form['vidlink']
@@ -61,7 +92,7 @@ def index():
             vidlink = 'https://www.youtube.com/watch?v=' + vidid
 
         # check if video already exists in uploads folder
-        if vidid in videos:
+        if vidid in [v[0] for v in videos]:
             flash(
                 'The video already exists. Please check the links below.',
                 'alert-info'
@@ -75,6 +106,15 @@ def index():
             ydl_opts = {
                 'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4',
                 'outtmpl': os.path.join(upload_dir, vidid + '.%(ext)s'),
+                'postprocessors': [
+                    {
+                        'key': 'MetadataFromTitle',
+                        'titleformat': '%(title)s'
+                    },
+                    {
+                        'key': 'FFmpegMetadata'
+                    }
+                ],
                 'logger': logger,
                 'progress_hooks': [hook],
             }
@@ -88,9 +128,7 @@ def index():
             args=(vidlink, vidid, app.config['UPLOAD_FOLDER'],
                   MyLogger(), my_hook)
         )
-        print('Opening thread...')
         ydl_thread.start()
-        print('Closing thread...')
 
         flash(
             'The video is downloading. Refresh the page later for new links.',
@@ -103,14 +141,11 @@ def index():
 @app.route('/download/<video>')
 def download(video=None):
     # scan upload folder for existing videos
-    videos = [
-        f for f in sorted_ls(app.config['UPLOAD_FOLDER'])
-        if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], f)) and len(f) <= 15
-    ]
+    videos = sorted_ls(app.config['UPLOAD_FOLDER'])
 
-    video_names = [f[:-4] for f in videos]
-
-    vid_dict = dict(zip(video_names, videos))
+    vid_dict = {}
+    for v in videos:
+        vid_dict.update({v[0]: v[1]})
 
     if video:
         try:
@@ -120,7 +155,7 @@ def download(video=None):
         except Exception:
             flash('File not found!', 'alert-danger')
 
-    return render_template('index.html', videos=video_names)
+    return render_template('index.html', videos=videos)
 
 
 if __name__ == '__main__':
