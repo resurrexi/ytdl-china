@@ -46,30 +46,19 @@
                 <div class="col">
                     <p>Available videos are listed below and are available for 24 hours from the time they are requested.</p>
                     {% if videos|length > 0 -%}
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Video</th>
-                                    <th scope="col">Created</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for video in videos -%}
-                                <tr>
-                                    <td>
-                                        <a href="{{ url_for('download', video=video[0]) }}">
-                                        {% if video[2] -%}
-                                            {{ video[2] }}
-                                        {%- else -%}
-                                            {{ video[0] }}
-                                        {%- endif %}
-                                        </a>
-                                    </td>
-                                    <td>{{ video[3] | tdiff }}</td>
-                                </tr>
-                                {%- endfor %}
-                            </tbody>
-                        </table>
+                        <ul>
+                            {% for video in videos -%}
+                            <li>
+                                <a href="{{ url_for('download', video=video[0]) }}">
+                                {% if video[2] -%}
+                                    {{ video[2] }}
+                                {%- else -%}
+                                    {{ video[0] }}
+                                {%- endif %}
+                                </a> <small class='text-muted'>({{ video[3] | tdiff }})</small>
+                            </li>
+                            {%- endfor %}
+                        </ul>
                     {% else %}
                         <p>No videos currently available</p>
                     {%- endif %}
