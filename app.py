@@ -35,7 +35,7 @@ def sorted_ls(path):
     return list(
         sorted(
             os.listdir(path),
-            key=lambda f: os.stat(os.path.join(path, f)).st_mtime,
+            key=lambda f: os.stat(os.path.join(path, f)).st_ctime,
             reverse=True
         )
     )
@@ -104,7 +104,7 @@ def index():
 def download(video=None):
     # scan upload folder for existing videos
     videos = [
-        f for f in os.listdir(app.config['UPLOAD_FOLDER'])
+        f for f in sorted_ls(app.config['UPLOAD_FOLDER'])
         if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], f)) and len(f) <= 15
     ]
 

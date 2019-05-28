@@ -14,5 +14,5 @@ videos = [
 now = time.time()
 
 for v in videos:
-    if now - os.stat(os.path.join(upload_path, v)).st_mtime > 86400:
+    if now - os.stat(os.path.join(upload_path, v)).st_ctime > 86400:
         os.remove(os.path.join(upload_path, v))
