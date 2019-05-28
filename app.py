@@ -108,11 +108,11 @@ def index():
                 'outtmpl': os.path.join(upload_dir, vidid + '.%(ext)s'),
                 'postprocessors': [
                     {
-                        'key': 'MetadataFromTitle',
-                        'titleformat': '%(title)s'
+                        'key': 'FFmpegMetadata'
                     },
                     {
-                        'key': 'FFmpegMetadata'
+                        'key': 'MetadataFromTitle',
+                        'titleformat': '%(title)s'
                     }
                 ],
                 'logger': logger,
