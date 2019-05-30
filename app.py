@@ -110,7 +110,7 @@ def index():
             import json
 
             ydl_opts = {
-                'format': 'best',
+                'format': 'mp4',
                 'outtmpl': os.path.join(upload_dir, vidid + '.%(ext)s'),
                 'writeinfojson': True,
                 'logger': logger,
