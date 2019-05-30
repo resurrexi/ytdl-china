@@ -3,7 +3,7 @@ import os
 
 filepath = os.path.dirname(os.path.abspath(__file__))
 
-conn = sqlite3.connect(os.path.join(filepath, 'db.sqlite'))
+conn = sqlite3.connect(os.path.join(filepath, 'uploads', 'db.sqlite'))
 cur = conn.cursor()
 
 cur.execute('''
