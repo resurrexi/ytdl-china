@@ -15,6 +15,7 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.join(filepath, 'uploads')
 app.config['STATIC_FOLDER'] = os.path.join(filepath, 'static')
 app.config['TEMPLATE_FOLDER'] = os.path.join(filepath, 'templates')
+app.config['USE_X_SENDFILE'] = True
 app.secret_key = 'DDD'
 
 
@@ -136,7 +137,11 @@ def index():
             INSERT INTO videos
             VALUES
             (?, ?, ?, ?)
-            ''', (vidid, info['_filename'], info['title'], ctime))
+            ''', (vidid,
+                  os.path.basename(info['_filename']),
+                  info['title'],
+                  ctime)
+            )
             conn.commit()
             cur.close()
             conn.close()
