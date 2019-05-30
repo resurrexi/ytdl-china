@@ -145,6 +145,9 @@ def index():
             cur.close()
             conn.close()
 
+            # remove json file
+            os.remove(os.path.join(upload_dir, '{}.info.json'.format(vidid)))
+
         # start thread
         ydl_thread = threading.Thread(
             target=download_video,
