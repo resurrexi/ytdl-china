@@ -6,6 +6,7 @@ import time
 
 from tinytag import TinyTag
 from flask import Flask, render_template, request, flash, send_from_directory
+from flask import redirect
 
 # init vars for app
 filepath = os.path.dirname(os.path.abspath(__file__))
@@ -73,6 +74,14 @@ def tdiff(s, default='just now'):
             return "%d %s ago" % (period, singular if period == 1 else plural)
 
     return default
+
+
+@app.before_request
+def before_request():
+    if not request.is_secure and app.env != "development":
+        url = request.url.replace("http://", "https://", 1)
+        code = 301
+        return redirect(url, code=code)
 
 
 @app.route('/', methods=['GET', 'POST'])
