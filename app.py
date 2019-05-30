@@ -3,8 +3,8 @@ import os
 import threading
 import re
 import time
+import sqlite3
 
-from tinytag import TinyTag
 from flask import Flask, render_template, request, flash, send_from_directory
 from flask import redirect
 
@@ -34,27 +34,22 @@ def my_hook(d):
         print('Done downloading, now converting ...')
 
 
-def get_title(f):
-    tag = TinyTag.get(f)
-    return tag.title
-
-
-def sorted_ls(path):
-    return list(
-        sorted(
-            [
-                (
-                    f[:-4],
-                    f,
-                    get_title(os.path.join(path, f)),
-                    os.stat(os.path.join(path, f)).st_ctime
-                ) for f in os.listdir(path)
-                if os.path.isfile(os.path.join(path, f)) and len(f) <= 15
-            ],
-            key=lambda f: os.stat(os.path.join(path, f[1])).st_ctime,
-            reverse=True
-        )
-    )
+def get_videos():
+    conn = sqlite3.connect(os.path.join(app.config['UPLOAD_FOLDER'],
+                                        'db.sqlite'))
+    cur = conn.cursor()
+    cur.execute('''
+    SELECT vidid
+        ,filename
+        ,title
+        ,createts
+    FROM videos
+    ORDER BY createts DESC
+    ''')
+    videos = cur.fetchall()
+    cur.close()
+    conn.close()
+    return videos
 
 
 @app.template_filter()
@@ -86,8 +81,8 @@ def before_request():
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    # scan upload folder for existing videos
-    videos = sorted_ls(app.config['UPLOAD_FOLDER'])
+    # get video list
+    videos = get_videos()
 
     if request.method == 'POST':
         address = request.form['vidlink']
@@ -101,7 +96,7 @@ def index():
             vidlink = 'https://www.youtube.com/watch?v=' + vidid
 
         # check if video already exists in uploads folder
-        if vidid in [v[0] for v in videos]:
+        if vidid in [v[0] for v in videos]:  # 0 index refers to vidid
             flash(
                 'The video already exists. Please check the links below.',
                 'alert-info'
@@ -111,28 +106,40 @@ def index():
         def download_video(vidlink, vidid, upload_dir, logger, hook):
             import youtube_dl
             import os
+            import sqlite3
+            import json
 
             ydl_opts = {
-                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4',
+                'format': 'best',
                 'outtmpl': os.path.join(upload_dir, vidid + '.%(ext)s'),
-                'postprocessors': [
-                    {
-                        'key': 'MetadataFromTitle',
-                        'titleformat': '%(title)s'
-                    },
-                    {
-                        'key': 'FFmpegMetadata'
-                    },
-                    {
-                        'key': 'XAttrMetadata'
-                    }
-                ],
+                'writeinfojson': True,
                 'logger': logger,
                 'progress_hooks': [hook],
             }
 
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([vidlink])
+
+            # fetch video info with json file
+            ctime = os.stat(os.path.join(
+                upload_dir, '{}.info.json'.format(vidid)
+            )).st_ctime
+            with open(os.path.join(
+                upload_dir, '{}.info.json'.format(vidid)
+            )) as file:
+                info = json.load(file)
+
+            # write to database
+            conn = sqlite3.connect(os.path.join(upload_dir, 'db.sqlite'))
+            cur = conn.cursor()
+            cur.execute('''
+            INSERT INTO videos
+            VALUES
+            (?, ?, ?, ?)
+            ''', (vidid, info._filename, info.title, ctime))
+            conn.commit()
+            cur.close()
+            conn.close()
 
         # start thread
         ydl_thread = threading.Thread(
@@ -152,12 +159,12 @@ def index():
 
 @app.route('/download/<video>')
 def download(video=None):
-    # scan upload folder for existing videos
-    videos = sorted_ls(app.config['UPLOAD_FOLDER'])
+    # get video list
+    videos = get_videos()
 
     vid_dict = {}
     for v in videos:
-        vid_dict.update({v[0]: v[1]})
+        vid_dict.update({v[0]: v[1]})  # idx 0 is vidid, idx 1 is filename
 
     if video:
         try:

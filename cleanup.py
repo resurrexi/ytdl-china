@@ -1,18 +1,33 @@
 import os
 import time
+import sqlite3
 
-upload_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           'uploads')
+filepath = os.path.dirname(os.path.abspath(__file__))
+upload_path = os.path.join(filepath, 'uploads')
 
-# scan upload folder for existing videos
-videos = [
-    f for f in os.listdir(upload_path)
-    if os.path.isfile(os.path.join(upload_path, f)) and len(f) <= 15
-]
+# grab database records
+conn = sqlite3.connect(os.path.join(upload_path, 'db.sqlite'))
+cur = conn.cursor()
+cur.execute('''
+SELECT vidid
+    ,filename
+    ,title
+    ,createts
+FROM videos
+ORDER BY createts DESC
+''')
+videos = cur.fetchall()
+cur.close()
+conn.close()
 
-# check video creation timestamp
+# iterate through records and remove videos older than 24hr
 now = time.time()
 
 for v in videos:
-    if now - os.stat(os.path.join(upload_path, v)).st_ctime > 86400:
-        os.remove(os.path.join(upload_path, v))
+    if now - v[3] > 86400:  # idx 3 is createts
+        os.remove(os.path.join(upload_path, v[1]))  # idx 1 is filename
+        cur.execute('DELETE FROM videos WHERE vidid = ?', (v[0],))
+        conn.commit()
+
+cur.close()
+conn.close()
