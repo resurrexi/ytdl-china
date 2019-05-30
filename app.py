@@ -136,7 +136,7 @@ def index():
             INSERT INTO videos
             VALUES
             (?, ?, ?, ?)
-            ''', (vidid, info._filename, info.title, ctime))
+            ''', (vidid, info['_filename'], info['title'], ctime))
             conn.commit()
             cur.close()
             conn.close()
