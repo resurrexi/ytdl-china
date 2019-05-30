@@ -26,6 +26,7 @@ now = time.time()
 for v in videos:
     if now - v[3] > 86400:  # idx 3 is createts
         os.remove(os.path.join(upload_path, v[1]))  # idx 1 is filename
+        os.remove(os.path.join(upload_path, '{}.info.json'.format(v[0])))
         cur.execute('DELETE FROM videos WHERE vidid = ?', (v[0],))
         conn.commit()
 
