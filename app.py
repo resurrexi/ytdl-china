@@ -121,9 +121,9 @@ def index():
                 ydl.download([vidlink])
 
             # fetch video info with json file
-            ctime = os.stat(os.path.join(
+            ctime = os.path.getmtime(os.path.join(
                 upload_dir, '{}.info.json'.format(vidid)
-            )).st_ctime
+            ))
             with open(os.path.join(
                 upload_dir, '{}.info.json'.format(vidid)
             )) as file:
