@@ -17,8 +17,6 @@ FROM videos
 ORDER BY createts DESC
 ''')
 videos = cur.fetchall()
-cur.close()
-conn.close()
 
 # iterate through records and remove videos older than 24hr
 now = time.time()
