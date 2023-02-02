@@ -4,5 +4,5 @@ itsdangerous==1.1.0
 Jinja2==2.10.1
 MarkupSafe==1.1.1
 waitress==1.4.3
-Werkzeug==0.15.4
+Werkzeug==0.15.5
 youtube-dl==2019.5.20
